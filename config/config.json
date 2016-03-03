@@ -1,5 +1,5 @@
 {
-    "ServiceSettings": {
+    "ServerSettings": {
         "ListenAddress": ":8065",
         "MaximumLoginAttempts": 10,
         "SegmentDeveloperKey": "",
@@ -31,7 +31,7 @@
     },
     "SqlSettings": {
         "DriverName": "postgres",
-        "DataSource": "postgres://pandai01:pandai123cn@localhost:5432/circle_development?sslmode=disable",
+        "DataSource": "postgres://showntop:1@localhost:5432/circle_development?sslmode=disable",
         "DataSourceReplicas": [],
         "MaxIdleNum": 10,
         "MaxOpenNum": 10,
