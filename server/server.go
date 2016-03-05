@@ -1,53 +1,74 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/braintree/manners"
-	"github.com/gorilla/mux"
-	"github.com/showntop/circle-core/logger"
+	"github.com/julienschmidt/httprouter"
 )
 
 type ServerConf struct {
 }
 
-var Router *mux.Router
-
-func Fire(config map[string]interface{}) {
-	New()
-	RegistHandlers()
-	Start()
+type Server struct {
+	////其它信息
+	////addr
+	Router      *httprouter.Router
+	middlewares []Middleware
 }
 
-func New() {
-	Router = mux.NewRouter()
-	Router.NotFoundHandler = http.HandlerFunc(Handle404)
+func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	////执行middleware
+	// logger.Info(req.RequestURI)
+	// logger.Info(req.URL)
+	fmt.Println(req.URL)
+	fmt.Println(req.RequestURI)
+	s.Router.ServeHTTP(w, req)
 }
 
-func Start() {
-	// go func() {
-	err := manners.ListenAndServe(":8000", Router)
-	if err != nil {
-		logger.Fatal("api.server.start_server.starting.critical")
-		time.Sleep(time.Second)
-		panic("api.server.start_server.starting.panic")
+func (c *Server) use(middleware ...Middleware) {
+	c.middlewares = append(c.middlewares, middleware...)
+}
+
+func (c *Server) AddRoute(method string, path string, handler http.HandlerFunc) {
+	c.Router.HandlerFunc(method, path, handler)
+}
+
+// 给指定的http方法和路径注册handler
+func (c *Server) Handle(method, path string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) {
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		handler = middlewares[i](handler)
 	}
-	// }()
-}
 
-func RegistHandlers() {
-	for _, route := range routes {
-		var handler http.HandlerFunc
-		handler = route.HandlerFunc
-		Router.Methods(route.Method).
-			Path(route.Pattern).
-			Name(route.Name).
-			Handler(handler)
-	}
+	c.Handle(method, path, handler)
 }
 
 func Handle404(w http.ResponseWriter, r *http.Request) {
-	logger.Info("404")
+	fmt.Println(r.URL)
+	fmt.Println(".........................not found.............................")
 
+}
+
+func New() *Server {
+	r := httprouter.New()
+	return &Server{Router: r}
+}
+
+func Fire(config map[string]interface{}) {
+	fmt.Println("server is starting.......")
+
+	c := New()
+
+	c.Router.NotFound = http.HandlerFunc(Handle404)
+	RegistRoutes(c)
+	http.ListenAndServe(":8080", c)
+}
+
+func RegistRoutes(c *Server) {
+	///根据routes的path,server config里面应该有的
+	for _, route := range routes {
+		var handler http.HandlerFunc
+		handler = route.HandlerFunc
+		c.AddRoute(route.Method, route.Pattern, handler)
+	}
 }

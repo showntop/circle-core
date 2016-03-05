@@ -7,12 +7,9 @@ import (
 )
 
 type Home struct {
-	Handler
 }
 
 func (h Home) Index(w http.ResponseWriter, r *http.Request) {
-	logger.Info("strstrstrstrstrstrstrstrstrstrstrstrstrstrstrstrstrstr")
-	return Handler{func(w, r) {
-
-	}}
+	logger.Info("this is the home page")
+	w.Write([]byte("this is the home page"))
 }
